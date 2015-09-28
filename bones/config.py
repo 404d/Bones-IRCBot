@@ -44,6 +44,10 @@ class ServerConfiguration(object):
         queue = []
         sections = self.config._conf.sections()
 
+        self.load_global_config(sections, queue)
+        self.load_server_config(queue)
+
+    def load_global_config(self, sections, queue):
         for section in sections:
             try:
                 self.data[section.lower()]
@@ -59,6 +63,7 @@ class ServerConfiguration(object):
                         self.data[section.lower()][data] = self.config \
                             ._conf._sections[section][data]
 
+    def load_server_config(self, queue):
         for section in queue:
             tmp = section.split(".")
             if len(tmp) > 2:
@@ -83,11 +88,15 @@ class ServerConfiguration(object):
         :type section: String
         :param option: Name of the option to get.
         :type option: String
-        :param default: Value to be returned if no such option could be found. :code:`default=Exception`
-            results in a compatibility mode with older modules which basically works as an override for the new
-            behaviour, resulting in option retrieval even if there's no such option.
+        :param default: Value to be returned if no such option could be found.
+            :code:`default=Exception` results in a compatibility mode with
+            older modules which basically works as an override for the new
+            behaviour, resulting in option retrieval even if there's no such
+            option.
         """
-        if section.lower() in self.data and option.lower() in self.data[section.lower()] or default is Exception:
+        if (section.lower() in self.data and
+                option.lower() in self.data[section.lower()]) or \
+                default is Exception:
             return self.data[section.lower()][option.lower()]
         else:
             return default

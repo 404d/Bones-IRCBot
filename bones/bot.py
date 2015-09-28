@@ -13,7 +13,9 @@ logging.addLevelName(2, "RAW")
 log = logging.getLogger(__name__)
 log.raw = lambda *args: log.log(2, *args)
 
-removeEmptyElementsFromList = lambda x: [e for e in x if e]
+
+def removeEmptyElementsFromList(l):
+    return [e for e in l if e]
 
 
 class InvalidBonesModuleException(Exception):
@@ -536,8 +538,8 @@ class BonesBot(irc.IRCClient):
                                            self.get_user(prefix))
 
         def onInviteJoin(event):
-            if self.factory.settings.get("bot", "joinOnInvite", default="false") \
-                    != "true":
+            if self.factory.settings.get("bot", "joinOnInvite",
+                                         default="false") != "true":
                 return
             if event.isCancelled:
                 log.debug("Got invited to '%s' on {%s} by %s, but the event "
@@ -641,6 +643,7 @@ class BonesBot(irc.IRCClient):
 
     def quit(self, message=None):
         event = bones.event.BotPreQuitEvent(self, message)
+
         def doQuit(event):
             if event.quitMessage:
                 self.sendLine("QUIT :{}".format(event.quitMessage))
@@ -689,12 +692,15 @@ class BonesBotFactory(protocol.ClientFactory):
         self.reconnect = True
 
         self.urlopener = urllib2.build_opener()
-        self.urlopener.addheaders = [('User-agent', 'urllib/2 BonesIRCBot/%s' % self.versionNum)]
+        self.urlopener.addheaders = [
+            ('User-agent', 'urllib/2 BonesIRCBot/%s' % self.versionNum)
+        ]
 
         self.reconnectAttempts = 0
 
         self.settings = settings
-        self.channels = settings.get("server", "channel", default="").split("\n")
+        self.channels = settings.get("server", "channel", default="") \
+            .split("\n")
         self.channels = removeEmptyElementsFromList(self.channels)
         self.nicknames = settings.get("bot", "nickname", default="") \
             .split("\n")
@@ -729,7 +735,8 @@ class BonesBotFactory(protocol.ClientFactory):
         for module in modules:
             self.loadModule(module)
         self.reconnect = True
-        reactor.addSystemEventTrigger('before', 'shutdown', self.twisted_shutdown)
+        reactor.addSystemEventTrigger('before', 'shutdown',
+                                      self.twisted_shutdown)
         bones.event.fire(self.tag, bones.event.BotInitializedEvent(self))
 
     def loadModule(self, path):
@@ -869,15 +876,15 @@ class BonesBotFactory(protocol.ClientFactory):
                 and not serverHost.endswith("]"):
             # IPv6 address, but not enclosed in brackets
             log_serverHost = "[%s]" % serverHost
-        elif ":" in serverHost and (serverHost.startswith("[")
-                                    and serverHost.endswith("]")):
+        elif ":" in serverHost and (serverHost.startswith("[") and
+                                    serverHost.endswith("]")):
             # IPv6 address and enclosed in brackets
             serverHost = serverHost[1:-1]
         if self.settings.get("bot", "bindAddress", default=None):
             bind_address = (self.settings.get("bot", "bindAddress"), 0)
             # Strip brackets if we're getting an IPv6 address
-            if ":" in bind_address[0] and (bind_address[0].startswith("[")
-                                           and bind_address[0].endswith("]")):
+            if ":" in bind_address[0] and (bind_address[0].startswith("[") and
+                                           bind_address[0].endswith("]")):
                 bind_address = (bind_address[0][1:-1], bind_address[1])
         else:
             bind_address = None
@@ -910,9 +917,11 @@ class BonesBotFactory(protocol.ClientFactory):
     def twisted_shutdown(self):
         self.shutdown_deferred = defer.Deferred()
         self.reconnect = False
+
         def shutdown_hook(self):
             if self.client:
-                self.client.quit(self.settings.get("bot", "quitMessage", default="Reactor shutdown"))
+                self.client.quit(self.settings.get("bot", "quitMessage",
+                                                   default="Reactor shutdown"))
             else:
                 reactor.callLater(0.0, self.shutdown_deferred.callback, 1)
         reactor.callLater(0.0, shutdown_hook, self)

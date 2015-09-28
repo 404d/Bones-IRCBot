@@ -17,24 +17,33 @@ class NickServ(Module):
 
     @bones.event.handler(event=bones.event.BotSignedOnEvent)
     def identifySignOn(self, event):
-        if self._disabled: return
+        if self._disabled:
+            return
         # Make sure that we're supposed to identify now.
         if self.settings.get("services", "nickserv.waitForNotice",
-                             default="true") == "false":
-            # We're good to go!
-            self.log.info("Identifying with NickServ")
-            event.client.msg(
-                "NickServ",
-                "IDENTIFY %s" % self.settings.get("services",
-                                                  "nickserv.password")
-            )
+                             default="true") != "false":
+            return
+
+        # We're good to go!
+        self.log.info("Identifying with NickServ")
+        event.client.msg(
+            "NickServ",
+            "IDENTIFY %s" % self.settings.get("services",
+                                              "nickserv.password")
+        )
 
     @bones.event.handler(event=bones.event.BotNoticeReceivedEvent)
     def identifyNotice(self, event):
-        if self._disabled: return
+        if self._disabled:
+            return
+
+        # Make sure that we're supposed to handle on notices.
+        if self.settings.get("services", "nickserv.waitForNotice",
+                             default="true") != "true":
+            return
+
         # Make sure that we're supposed to identify now.
-        if self.settings.get("services", "nickserv.waitForNotice", default="true") == "true" \
-                and "IDENTIFY" in event.message.upper() \
+        if "IDENTIFY" in event.message.upper() \
                 and bones.event.User(event.user, event.client) \
                 .nickname.lower() == "nickserv":
             # We're good to go!

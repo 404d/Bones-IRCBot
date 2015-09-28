@@ -8,6 +8,10 @@ log = logging.getLogger(__name__)
 eventHandlers = {}
 
 
+def is_handler(x):
+    return inspect.ismethod(x) or inspect.isfunction(x)
+
+
 def fire(server, event, *args, **kwargs):
     """Call all event handlers with the specified event identifier
     registered to the provided server with the provided arguments.
@@ -101,7 +105,6 @@ def register(obj, server):
     :type server: :class:`bones.bot.BonesBot`
     """
     klass = obj.__class__
-    is_handler = lambda x: inspect.ismethod(x) or inspect.isfunction(x)
     for name, method in inspect.getmembers(klass, is_handler):
         if getattr(method, '_event', None) is not None:
             for event in method._event:

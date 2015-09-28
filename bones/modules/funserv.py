@@ -1,7 +1,6 @@
 # -*- encoding: utf8 -*-
 import re
 import random
-import logging
 from datetime import datetime
 import urllib2
 
@@ -51,13 +50,15 @@ class QDB(Module):
                 id = int(event.args[1])
             self.log.debug("Fetching qdb.us/%i", id)
             try:
-                data = event.client.factory.urlopener.open("http://qdb.us/%i" % id)
+                data = event.client.factory.urlopener.open("http://qdb.us/%i"
+                                                           % id)
             except urllib2.HTTPError, ex:
                 if ex.code == 404:
                     event.channel.msg(str("[QDB #%s] Quote not found." % id))
                     return
                 self.log.exception(ex)
-                self.log.error("Unable to fetch quote #%i because of an HTTP error." % id)
+                self.log.error("Unable to fetch quote #%i because of an "
+                               "HTTP error." % id)
                 event.channel.msg("Unable to fetch new quotes")
                 return
             if data.getcode() == 404:
@@ -113,7 +114,8 @@ class QDB(Module):
             try:
                 html = factory.urlopener.open("http://qdb.us/random").read()
             except urllib2.HTTPError:
-                self.log.error("Unable to fetch new quotes because of an HTTP error.")
+                self.log.error("Unable to fetch new quotes because of an HTTP "
+                               "error.")
                 return
             soup = self.BeautifulSoup(html)
             data = soup.findAll("span", {"class": "qt"})
@@ -136,6 +138,7 @@ class Factoid(storage.Base):
         self.submitter = submitter
         self.topic = topic
         self.fact = fact
+
 
 class Factoids(Module):
     reLearn = re.compile("(.+) is (.+)")
@@ -167,7 +170,8 @@ class Factoids(Module):
         if event.message.startswith("?"):
             topic = event.message[1:]
             session = self.db.new_session()
-            factoids = session.query(Factoid).filter(Factoid.topic == topic).all()
+            factoids = session.query(Factoid) \
+                .filter(Factoid.topic == topic).all()
             if not factoids:
                 return
             msg = "%s is" % topic.decode("utf-8")
@@ -260,9 +264,11 @@ if __name__ == "__main__":
         print "Error: Config file does not contain a 'storage' section."
         sys.exit(1)
     elif "sqlalchemy.url" not in settings._sections["storage"]:
-        print "Error: Section 'storage' does not contain an 'sqlalchemy.url' key."
+        print("Error: Section 'storage' does not contain an 'sqlalchemy.url'",
+              "key.")
         sys.exit(1)
-    print "Connecting to '%s'..." % settings._sections["storage"]["sqlalchemy.url"]
+    print("Connecting to '%s'..."
+          % settings._sections["storage"]["sqlalchemy.url"])
     engine = engine_from_config(settings._sections["storage"], "sqlalchemy.")
     print "Creating tables..."
     from bones.modules.storage import Base

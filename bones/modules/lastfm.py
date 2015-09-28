@@ -71,7 +71,8 @@ class Lastfm(Module):
             return
 
         try:
-            data = self.api("user.getRecentTracks", user=user.username, extended=1)
+            data = self.api("user.getRecentTracks", user=user.username,
+                            extended=1)
         except ValueError:
             event.channel.msg(
                 "[Last.fm] Last.fm returned an invalid response. Please "
@@ -166,7 +167,9 @@ class Lastfm(Module):
         user = self.getUser(session, event.user.nickname)
         if not user:
             event.user.notice(str(
-                "[Last.fm] No user registered for nick '%s'." % event.user.nickname))
+                "[Last.fm] No user registered for nick '%s'."
+                % event.user.nickname
+            ))
             return
 
         session.begin()
@@ -239,11 +242,11 @@ if __name__ == "__main__":
         print "Error: Config file does not contain a 'storage' section."
         sys.exit(1)
     elif "sqlalchemy.url" not in settings._sections["storage"]:
-        print ("Error: Section 'storage' does not contain an 'sqlalchemy.url' "
-               "key.")
+        print("Error: Section 'storage' does not contain an 'sqlalchemy.url' "
+              "key.")
         sys.exit(1)
-    print ("Connecting to '%s'..."
-           % settings._sections["storage"]["sqlalchemy.url"])
+    print("Connecting to '%s'..."
+          % settings._sections["storage"]["sqlalchemy.url"])
     engine = engine_from_config(settings._sections["storage"], "sqlalchemy.")
     print "Creating table '%s'..." % User.__tablename__
     from bones.modules.storage import Base

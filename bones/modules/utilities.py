@@ -90,42 +90,48 @@ class Twitter(Module):
 
     @bones.event.handler(event=bones.event.ChannelMessageEvent)
     def eventURLInfo_Twitter(self, event):
-        if self.bs is not None:
-            if "twitter" in event.message and "http" in event.message:
-                data = self.reTweetLink.search(event.message)
-                if data:
-                    url = data.group(0)
-                    html = event.client.factory.urlopener.open(url).read()
-                    soup = self.bs(html)
-                    tweet = soup \
-                        .find("div", {"class": "permalink-inner permalink-tweet-container"}) \
-                        .find("p", {"class": "tweet-text"}) \
-                        .text
-                    tweet = u"↵ ".join(tweet.split("\n"))
-                    user = soup \
-                        .find("div", {"class": "permalink-inner permalink-tweet-container"}) \
-                        .find("span", {"class": "username js-action-profile-name"}) \
-                        .text
+        if self.bs is None:
+            return
 
-                    # shitty fix for pic.twitter.com links
-                    # could be improved by going through all links, check
-                    # whether they start with http and if not replace the
-                    # nodeText with the href attribute.
-                    out = []
-                    for word in tweet.split(" "):
-                        if word.startswith("pic.twitter.com"):
-                            word = "https://%s" % word
-                        out.append(word)
-                    tweet = " ".join(out)
+        if "twitter" in event.message and "http" in event.message:
+            data = self.reTweetLink.search(event.message)
 
-                    msg = (u"\x0310Twitter\x03 \x0311::\x03 %s \x0311––\x03 %s"
-                           % (tweet, user))
-                    event.channel.msg(msg.encode("utf-8"))
+            if not data:
+                return
+
+            url = data.group(0)
+            html = event.client.factory.urlopener.open(url).read()
+            soup = self.bs(html)
+            tweet = soup \
+                .find("div",
+                      {"class": "permalink-inner permalink-tweet-container"}) \
+                .find("p", {"class": "tweet-text"}) \
+                .text
+            tweet = u"↵ ".join(tweet.split("\n"))
+            user = soup \
+                .find("div",
+                      {"class": "permalink-inner permalink-tweet-container"}) \
+                .find("span", {"class": "username js-action-profile-name"}) \
+                .text
+
+            # shitty fix for pic.twitter.com links
+            # could be improved by going through all links, check
+            # whether they start with http and if not replace the
+            # nodeText with the href attribute.
+            out = []
+            for word in tweet.split(" "):
+                if word.startswith("pic.twitter.com"):
+                    word = "https://%s" % word
+                out.append(word)
+            tweet = " ".join(out)
+
+            msg = (u"\x0310Twitter\x03 \x0311::\x03 %s \x0311––\x03 %s"
+                   % (tweet, user))
+            event.channel.msg(msg.encode("utf-8"))
 
 
 class YouTube(Module):
     bs = None
-    __fetchData = lambda x: {"template": "html", "title": "Something went wrong"}
 
     reVideoLink = re.compile("(https?\:\/\/)?(m\.|www\.)?(youtube\.com\/watch\?(.+)?v\=|youtu\.be\/)(?P<id>[a-zA-Z-0-9\_\-]*)")  # NOQA
     __template_simple = u"\x0314You\x035Tube \x0314::\x03 {title} \x034::\x03 http://youtu.be/{id}"  # NOQA
@@ -133,12 +139,23 @@ class YouTube(Module):
 
     apiEndpoint = "https://www.googleapis.com/youtube/v3/%s?%s"
 
+    def __fetchData(x):
+        return {
+            "template": "html", "title": "Something went wrong"
+        }
+
     def __init__(self, *args, **kwargs):
         Module.__init__(self, *args, **kwargs)
         self.fetchData = self.__fetchData
 
-        self.template_simple = self.settings.get("module.utilities", "youtube.template.simple", default=self.__template_simple)
-        self.template_api = self.settings.get("module.utilities", "youtube.template.api", default=self.__template_api)
+        self.template_simple = self.settings.get(
+            "module.utilities",
+            "youtube.template.simple",
+            default=self.__template_simple
+        )
+        self.template_api = self.settings.get("module.utilities",
+                                              "youtube.template.api",
+                                              default=self.__template_api)
         self.apikey = self.settings.get("module.utilities", "youtube.apikey",
                                         default=None)
         if not self.apikey:
