@@ -278,7 +278,7 @@ class BonesBot(irc.IRCClient):
         user = self.get_user(mask)
         if not user:
             user = self.create_user(mask)
-        log.info(
+        log.debug(
             "User %s parted from %s",
             user, channel
         )
@@ -294,7 +294,7 @@ class BonesBot(irc.IRCClient):
         user = self.get_user(mask)
         if not user:
             user = self.create_user(mask)
-        log.info(
+        log.debug(
             "User %s quit (Reason: %s)",
             user, quitMessage
         )
